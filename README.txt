@@ -16,7 +16,6 @@ Introduction
 * The main documentation is not there but on http://www.minitage.org, please go there for further instructions.
 
 
-
 Credits
 ========
 Companies
