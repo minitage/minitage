@@ -83,3 +83,51 @@ Syncing packages
 
             minimerge -s
 
+
+Integrate your existing python project base on buildout
+--------------------------------------------------------
+
+Idea is to make buildoutrs to all buildouts in the top directory to wrap the underlying minitage environment.
+
+We will also make a a minilay with minibuilds pointing to those wrappers.
+
+This will help you fastly integrating minitage !
+
+If you project layout is something like::
+
+    .
+    ├── base.cfg
+    ├── buildout.cfg
+    ├── otherbuildout.cfg
+    └── foo
+        └── bar
+
+You want it to be installed a a zope project, do the following::
+
+    cd ~/minitage
+    . bin/activate
+    mkdir -p zope
+    SCM clone URL zope/yourproject
+    minitagify -d zope/yourproject
+    . Wraping ~/minitage/zope/yourpoject/otherbuildout.cfg (minitage27.cfg) in ~/minitage/zope/yourpoject/minitage.otherbuildout.cfg->~/minitage/zope/yourpoject/.minitagecfg/otherbuildout.cfg
+    . Wraping ~/minitage/zope/yourpoject/buildout.cfg (minitage27.cfg) in ~/minitage/zope/yourpoject/minitage.buildout.cfg->~/minitage/zope/yourpoject/.minitagecfg/buildout.cfg
+    . Wraping ~/minitage/zope/yourpoject/base.cfg (minitage27.cfg) in ~/minitage/zope/yourpoject/minitage.base.cfg->~/minitage/zope/yourpoject/.minitagecfg/base.cfg
+    . Wroted minibuild yourpoject-otherbuildout in ~/minitage/minilays/05d75df848d13853578095d08f5c7253a/yourpoject-otherbuildout
+    . Wroted minibuild yourpoject-buildout in ~/minitage/minilays/05d75df848d13853578095d08f5c7253a/yourpoject-buildout
+    . Wroted minibuild yourpoject-base in ~/minitage/minilays/05d75df848d13853578095d08f5c7253a/yourpoject-base
+    . Wroted minibuild yourpoject in ~/minitage/minilays/05d75df848d13853578095d08f5c7253a/yourpoject
+
+
+Yu will then have to use
+
+    - minitage.buildout.cfg for buildout.cfg
+    - minitage.otherbuildout.cfg for otherbuildout.cfg
+
+Like::
+
+    cd zope/yourproject
+    python bootstrap.py
+    bin/buildout -vvvvvvvNc minitage.buildout.cfg
+    bin/buildout -vvvvvvvNc minitage.otherbuildout.cfg
+
+
