@@ -23,7 +23,7 @@ parser.add_option("-d", "--directory", dest="directory",
 
 re_flags = re.S|re.U|re.X
 targets = [
-    (re.compile('.*zeo.*\.cfg', re_flags),'minitagezeo.cfg',),
+    #(re.compile('.*zeo.*\.cfg', re_flags),'minitagezeo.cfg',),
     (re.compile('.*4\.?2.*\.cfg'  , re_flags),'minitage27.cfg', ),
     (re.compile('.*4\.?0.*\.cfg'  , re_flags),'minitage26.cfg', ),
     (re.compile('.*4\.?1.*\.cfg'  , re_flags),'minitage26.cfg', ),
@@ -73,7 +73,10 @@ def make_minilay(directory, buildouts):
     minimerge = get_minimerge(read_options=False)
     default_minibuild = os.path.basename(directory)
     categ = os.path.basename(os.path.dirname(directory))
-    minilayname = '0%s' % hashlib.md5(directory).hexdigest()
+    minilayname = '0-%s_%s' % (
+        default_minibuild,
+        hashlib.md5(directory).hexdigest()
+    )
     minilaydir = os.path.join(minimerge.minilays_parent, minilayname)
     minibuild = os.path.join(minilaydir, os.path.basename(directory))
     if not len(buildouts):
@@ -83,11 +86,25 @@ def make_minilay(directory, buildouts):
         os.makedirs(minilaydir)
     MINIBUILDS = []
     MCONTENT = open(os.path.join(DATA, 'minibuild')).read()
-    MCONTENT = re.sub('category=.*', 'category=%s'%categ, MCONTENT)
+    MCONTENT = re.sub('category=.*', 
+                      'category=%s'% categ, MCONTENT)
+    configs_mapping = dict([(os.path.basename(a),
+                             buildouts[a])
+                            for a in buildouts])
 
     def minibuild(cfg):
         minibuild_content = MCONTENT
-        minibuild_content = re.sub('buildout_config=.*', 'buildout_config=%s'%cfg, minibuild_content)
+        minibuild_content = re.sub(
+            'buildout_config=.*', 
+            'buildout_config=%s' % (
+                os.path.basename(
+                    configs_mapping.get(
+                        cfg, 'minitage.buildout.cfg'
+                    )
+                ) 
+            )
+            ,minibuild_content
+        )
         python = 'python-2.7'
         for match, c in pythons:
             if match.search(cfg):
@@ -142,9 +159,11 @@ def wrap(buildout):
         'orig': relative( directory, buildout), 
         'wrapper': relative(directory, os.path.join(m, cfg))
     })
-    if os.path.exists(d): os.unlink(d)
+    if os.path.exists(d): 
+        os.unlink(d)
     os.symlink(b, d)
     f.close()
+    return d
 
 def main():
     (options, args) = parser.parse_args()
@@ -164,11 +183,10 @@ def main():
     if not buildouts:
         copy_tree(INFRA, directory)
     buildouts = sbuildouts(directory)
-    installed = []
+    installed = {}
     for i in buildouts:
         try:
-           wrap(i)
-           installed.append(i)
+           installed[i] = wrap(i)
         except Exception, e:
             logger.warn('cant wrap; %s' % i)
     helper = os.path.join(directory, '.minitagecfg', 'b.sh')
