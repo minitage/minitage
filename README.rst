@@ -5,7 +5,7 @@ Introduction
 .. contents::
 
 
-.. image:: https://secure.travis-ci.org/minitage/minitage..png
+.. image:: https://secure.travis-ci.org/minitage/minitage.png
     :target: http://travis-ci.org/minitage/minitage
  
 

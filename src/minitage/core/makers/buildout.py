@@ -292,6 +292,8 @@ class BuildoutMaker(interfaces.IMaker):
                     'Missing either '
                     'zc.buildout or distribute source')
         if eggs_base is not None:
+            if self.buildout_config and '"-c"' in content:
+                bootstrap_args += " -c %s" % self.buildout_config
             arg = ""
             if '--download-base' in content:
                 arg = "--download-base"

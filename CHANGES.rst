@@ -5,7 +5,7 @@ Changelog for minitage.core
 2.0.56 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- fix bug in buildout maker
 
 
 2.0.55 (2013-04-01)
