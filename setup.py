@@ -40,7 +40,7 @@ setup(
     namespace_packages = [ 'minitage', 'minitage.core', ],
     install_requires = ['iniparse', 
                         'minitage.paste >= 1.4.6',
-                        'minitage.core >= 2.0.57',
+#                        'minitage.core >= 2.0.57',
                         'ordereddict', 'setuptools'],
     zip_safe = False,
     include_package_data = True,
