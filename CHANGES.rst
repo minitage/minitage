@@ -2,7 +2,7 @@ Changelog for minitage
 ===============================
 
 
-2.0.57 (unreleased)
+2.0.57 (2013-04-02)
 -------------------
 
 - fix bug in buildout maker
