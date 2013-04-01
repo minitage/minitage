@@ -7,13 +7,16 @@ from minitage.core.cli import get_minimerge
 import traceback
 
 def launch():
+    debug = False
     try:
         minimerge = get_minimerge(read_options=True)
+        debug = minimerge._debug
         minimerge.main()
+        debug = minimerge._debug
     except Exception, e:
         trace = traceback.format_exc()
         sys.stderr.write('Minimerge executation failed:\n')
-        if minimerge._debug:
+        if debug:
             sys.stderr.write('\t%s\n' % trace)
         else:
             sys.stderr.write('\t%s\n' % e)

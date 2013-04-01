@@ -46,7 +46,7 @@ index=%(index)s
 find-links=%(index)s
 [part]
 recipe=minitage.recipe.scripts
-eggs=minitage.core
+eggs=minitage
 """
 
 
@@ -172,7 +172,7 @@ def install_buildout(destination=".", requirements=None,
                      cfg='buildout.cfg', buildout=None):
     destination = os.path.abspath(destination)
     if not requirements:
-        requirements = ['minitage.core[test]']
+        requirements = ['minitage[test]']
     if not os.path.exists(destination):
         os.makedirs(destination)
     develop_path = J(
@@ -305,7 +305,7 @@ def create_minitage_env(directory, requirements=None):
 class Layer(Base):
 
     defaultBases = tuple()
-    requirements = ('minitage.core[test]',)
+    requirements = ('minitage[test]',)
 
     def setUp(self):
         self['pathes'] = []
@@ -464,12 +464,12 @@ class test:
         open('testres2.4','w').write('2.4') """)
     ds = open(
             pkg_resources.resource_filename(
-                'minitage.core','distribute_setup.py')
+                pkg_resources.Requirement.parse('minitage'),'minitage/core/distribute_setup.py')
     ).read()
     boot = open(
-        J(D(D(D(
+        J(D(
             pkg_resources.resource_filename(
-                'minitage.core', '')))), 'bootstrap.py')
+                pkg_resources.Requirement.parse('minitage'), '')), 'bootstrap.py')
     ).read()
     touch(ipath, 'bootstrap.py', data=boot)
     touch(ipath, 'distribute_setup.py', data=boot)

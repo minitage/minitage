@@ -5,8 +5,8 @@ Introduction
 .. contents::
 
 
-.. image:: https://secure.travis-ci.org/minitage/minitage.core.png
-    :target: http://travis-ci.org/minitage/minitage.core
+.. image:: https://secure.travis-ci.org/minitage/minitage..png
+    :target: http://travis-ci.org/minitage/minitage
  
 
 

@@ -5,7 +5,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-name = 'minitage.core'
+name = 'minitage'
 version = '2.0.55.dev0'
 def read(rnames):
     setupdir =  os.path.dirname( os.path.abspath(__file__))
@@ -37,8 +37,11 @@ setup(
     author_email = 'kiorky@cryptelium.net',
     url = 'http://cheeseshop.python.org/pypi/%s' % name,
     license = 'BSD',
-    namespace_packages = [ 'minitage', name, ],
-    install_requires = ['iniparse', 'minitage.paste >= 1.3.1850', 'ordereddict', 'setuptools'],
+    namespace_packages = [ 'minitage', 'minitage.core', ],
+    install_requires = ['iniparse', 
+                        'minitage.paste >= 1.4.6',
+                        'minitage.core >= 2.0.56',
+                        'ordereddict', 'setuptools'],
     zip_safe = False,
     include_package_data = True,
     packages = find_packages('src'),
@@ -46,7 +49,7 @@ setup(
     extras_require={'test': ['plone.testing', 
                              'mocker', 
                              'httplib2', 
-                             'zc.buildout', 
+                             'minitage.paste >= 1.4.6',
                              'minitage.recipe.scripts',
                              'minitage.recipe.egg',
                              'minitage.recipe.common',

@@ -8,6 +8,6 @@ devsub = lambda x:rdevsub('', x)
 
 __docformat__ = 'restructuredtext en'
 __version__ = pkg_resources.require(
-    'minitage.core')[0].version
+    'minitage')[0].version
 version = devsub(__version__)
 # vim:set et sts=4 ts=4 tw=80:

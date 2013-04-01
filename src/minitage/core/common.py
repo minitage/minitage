@@ -558,13 +558,13 @@ You seem to be running minitage for the first time.
             if not os.path.isdir(dir):
                 os.makedirs(dir)
         tconfig = resource_filename(Requirement.parse(
-            'minitage.core == %s' % mm_version),
+            'minitage == %s' % mm_version),
             'etc/minimerge.cfg')
         changelog = resource_filename(Requirement.parse(
-            'minitage.core == %s' % mm_version),
+            'minitage == %s' % mm_version),
             'share/minitage/CHANGES.rst')
         readme = resource_filename(Requirement.parse(
-            'minitage.core == %s' % mm_version),
+            'minitage == %s' % mm_version),
             'share/minitage/README.rst')
         prefixed = re.sub('%PREFIX%', prefix, open(tconfig, 'r').read())
         fic = open(config, 'w')
