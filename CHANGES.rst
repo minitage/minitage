@@ -5,7 +5,7 @@ Changelog for minitage
 2.0.58 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- doc
 
 
 2.0.57 (2013-04-02)
