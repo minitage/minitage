@@ -10,10 +10,10 @@ The installation instructions are there:
 Automatic installation
 ------------------------------------------
 
-    See http://www.minitage.org/installation_new.html
+    See http://www.minitage.org/installation.html
 
 Using virtualenv (deprecated)
-++++++++++++++++++++++++++++++++++
+--------------------------------------
 
     See http://www.minitage.org/installation_old.html
 
