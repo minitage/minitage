@@ -10,7 +10,9 @@ import pkg_resources
 from optparse import OptionParser
 from minitage.core.cli import get_minimerge
 
-DATA = pkg_resources.resource_filename(pkg_resources.Requirement.parse('minitage'), 'cfgs')
+DATA = pkg_resources.resource_filename(
+    pkg_resources.Requirement.parse('minitage'),
+    'minitage/core/cfgs')
 
 FORMAT = '%(asctime)-15s %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.DEBUG)
