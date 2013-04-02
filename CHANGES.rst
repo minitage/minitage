@@ -2,7 +2,7 @@ Changelog for minitage
 ===============================
 
 
-2.0.60 (unreleased)
+2.0.60 (2013-04-02)
 -------------------
 
 - fix namespace problem
