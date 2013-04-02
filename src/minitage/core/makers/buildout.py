@@ -131,7 +131,7 @@ class BuildoutMaker(interfaces.IMaker):
                 if oldcontent:
                     fic = open('bootstrap.py', 'w')
                     fic.write(oldcontent)
-                    fic.close() 
+                    fic.close()
 
     def reinstall(self, directory, opts=None):
         """Rebuild a package.
@@ -268,7 +268,7 @@ class BuildoutMaker(interfaces.IMaker):
         if offline:
             if ' --accept-buildout-test-releases' in content:
                 bootstrap_args += ' --accept-buildout-test-releases'
-        if ('--setup-source' in content 
+        if ('--setup-source' in content
             and not "--find-links" in content):
             ds = select_ds(distribute_setup_places)
             if not ds and offline:
@@ -291,8 +291,6 @@ class BuildoutMaker(interfaces.IMaker):
                 raise Exception(
                     'Missing either '
                     'zc.buildout or distribute source')
-        if self.buildout_config and '"-c"' in content:
-            bootstrap_args += " -c %s" % self.buildout_config
         if eggs_base is not None:
 
             arg = ""
@@ -303,6 +301,8 @@ class BuildoutMaker(interfaces.IMaker):
             if arg:
                 bootstrap_args += ' %s "%s"' % (
                     arg, eggs_base)
+        if self.buildout_config and '"-c"' in content:
+            bootstrap_args += " -c %s" % self.buildout_config
         minitage.core.common.Popen(
             '%s bootstrap.py %s ' % (py, bootstrap_args,),
             opts.get('verbose', False)
@@ -315,7 +315,7 @@ class BuildoutMaker(interfaces.IMaker):
         offline = get_offline(opts)
         bcmd = os.path.normpath('./bin/buildout')
         minibuild = opts.get('minibuild', None)
-        dependency_or_egg = (getattr(minibuild, 'category', None) 
+        dependency_or_egg = (getattr(minibuild, 'category', None)
                              in ['dependencies', 'eggs'])
         offline = get_offline(opts)
         argv = []
