@@ -5,7 +5,7 @@ Changelog for minitage
 2.0.61 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- buildout maker fix
 
 
 2.0.60 (2013-04-02)
