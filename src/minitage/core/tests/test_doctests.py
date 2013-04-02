@@ -15,7 +15,7 @@ D = os.path.dirname
 optionflags = (doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE | doctest.REPORT_ONLY_FIRST_FAILURE)
 import pkg_resources
 cwd = pkg_resources.resource_filename(
-    'minitage.recipe.egg', 'tests')
+    pkg_resources.Requirement.parse( 'minitage.recipe.egg'), 'tests')
 root = D(D(D(D(D(cwd)))))
 
 
