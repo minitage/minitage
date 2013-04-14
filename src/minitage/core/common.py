@@ -434,73 +434,75 @@ def get_from_cache(url,
                 "Offline mode: file from %s not found in the cache at %s" %
                 (url, download_cache)
             )
+        tmp2 = None
         try:
-            tmp2 = None
-            try:
-                # okay, we've got to download now
-                if download_cache:
-                    # set up the cache and download into it
-                    fname = os.path.join(cache_sub_dir, filename)
-                    if logger:
-                        logger.debug(
-                            'Cache download %s as %s' % (
-                                url,
-                                download_cache)
-                        )
-                else:
-                    # use tempfile
-                    tmp2 = tempfile.mkdtemp('buildout-' + cache_sub_dir + filename)
-                    fname = os.path.join(tmp2, filename)
+            # okay, we've got to download now
+            if download_cache:
+                # set up the cache and download into it
+                fname = os.path.join(cache_sub_dir, filename)
                 if logger:
-                    logger.info(
-                        'Downloading %s in %s' % (url, fname)
+                    logger.debug(
+                        'Cache download %s as %s' % (
+                            url,
+                            download_cache)
                     )
+            else:
+                # use tempfile
+                tmp2 = tempfile.mkdtemp('buildout-' + cache_sub_dir + filename)
+                fname = os.path.join(tmp2, filename)
+            if logger:
+                logger.info(
+                    'Downloading %s in %s' % (url, fname)
+                )
 
-                local_file = '/not/existing/file/or/directory'
-                if 'file://' in url:
-                    local_file = url.replace('file://', '')
-                    if sys.platform.startswith('win') or sys.platform.startswith('cyg'):
-                        tpath = url.replace('file://', '')
-                        if letter_re.match(tpath):
-                            url = url.replace('file://', 'file:///')
-                if os.path.isdir(local_file):
-                    copy_tree(local_file, fname)
-                if (not os.path.exists(fname)) or use_cache is False:
-                    # we try to download the url with fragments, if it fails,
-                    # without.
-                    dfd = open(fname, 'wb')
-                    try:
-                        pi = PackageIndex()
-                        pi._attempt_download(url, fname)
-                    except:
-                        url, info = url.split('#', 1)
-                        if 'md5' in fragment:
-                            dfd.write(urlopen(url).read())
-                        else:
-                            raise
-                    dfd.flush()
-                    dfd.close()
-                if file_md5:
-                    if not test_md5(fname, file_md5):
-                        raise MinimergeMD5Mismatch(
-                            'MD5SUM mismatch for %s: Good:%s != Bad:%s' % (
-                                fname,
-                                file_md5,
-                                md5sum(fname)
-                            )
+            local_file = '/not/existing/file/or/directory'
+            if 'file://' in url:
+                local_file = url.replace('file://', '')
+                if sys.platform.startswith('win') or sys.platform.startswith('cyg'):
+                    tpath = url.replace('file://', '')
+                    if letter_re.match(tpath):
+                        url = url.replace('file://', 'file:///')
+            if os.path.isdir(local_file):
+                copy_tree(local_file, fname)
+            if (not os.path.exists(fname)) or use_cache is False:
+                # we try to download the url with fragments, if it fails,
+                # without.
+                dfd = open(fname, 'wb')
+                try:
+                    pi = PackageIndex()
+                    pi._attempt_download(url, fname)
+                except:
+                    url, info = url.split('#', 1)
+                    if 'md5' in fragment:
+                        dfd.write(urlopen(url).read())
+                    else:
+                        raise
+                dfd.flush()
+                dfd.close()
+            if file_md5:
+                if not test_md5(fname, file_md5):
+                    raise MinimergeMD5Mismatch(
+                        'MD5SUM mismatch for %s: Good:%s != Bad:%s' % (
+                            fname,
+                            file_md5,
+                            md5sum(fname)
                         )
-            except MinimergeOfflineError, e:
-                raise e
-            except MinimergeMD5Mismatch, e:
-                raise e
-            except Exception, e:
-                msg = 'Failed download for %s:\t%s' % (url, e)
-                if download_cache:
-                    msg += '\nBackup of the downloaded file has been made in %s' % make_backup(fname)
-                raise MinimergeDownloadError(msg)
-        finally:
+                    )
+        except MinimergeOfflineError, e:
             if tmp2 is not None:
                 shutil.rmtree(tmp2)
+            raise e
+        except MinimergeMD5Mismatch, e:
+            if tmp2 is not None:
+                shutil.rmtree(tmp2)
+            raise e
+        except Exception, e:
+            if tmp2 is not None:
+                shutil.rmtree(tmp2)
+            msg = 'Failed download for %s:\t%s' % (url, e)
+            if download_cache:
+                msg += '\nBackup of the downloaded file has been made in %s' % make_backup(fname)
+            raise MinimergeDownloadError(msg)
     return fname
 
 
