@@ -2,8 +2,8 @@ Changelog for minitage
 ===============================
 
 
-2.0.62 (unreleased)
---------------------
+2.0.62 (2013-04-14)
+-------------------
 
 - better download errors
 
