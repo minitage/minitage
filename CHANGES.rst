@@ -2,7 +2,7 @@ Changelog for minitage
 ===============================
 
 
-2.0.63 (unreleased)
+2.0.63 (2013-04-14)
 -------------------
 
 - Fix regression in download
