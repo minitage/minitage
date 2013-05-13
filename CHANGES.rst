@@ -2,7 +2,7 @@ Changelog for minitage
 ===============================
 
 
-2.0.64 (unreleased)
+2.0.64 (2013-05-13)
 -------------------
 
 - minitagify buildouts upgrade
