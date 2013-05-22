@@ -39,12 +39,14 @@ def select_fl(fl):
              if (a.startswith('distribute')
                  and (a.endswith('gz')
                      or a.endswith('zip')
+                     or a.endswith('egg')
                  ))]
             has_buildout = True in [True
              for a in files
              if (a.startswith('zc.buildout')
                  and (a.endswith('gz')
                      or a.endswith('zip')
+                     or a.endswith('egg')
                  ))]
             if has_buildout and has_ds:
                 ret = d
@@ -292,7 +294,6 @@ class BuildoutMaker(interfaces.IMaker):
                     'Missing either '
                     'zc.buildout or distribute source')
         if eggs_base is not None:
-
             arg = ""
             if '--download-base' in content:
                 arg = "--download-base"
