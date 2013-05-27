@@ -86,6 +86,7 @@ class StaticFetcher(interfaces.IFetcher):
             tries = 10 # 10 retries
             while tries:
                 try:
+                    downloaded_bits = ''
                     # if we have not specified the md5, try to get one
                     try:
                         (downloaded_bits, md5,
@@ -97,16 +98,22 @@ class StaticFetcher(interfaces.IFetcher):
                         tries = 0
                     except urllib2.HTTPError, e:
                         if e.code == 404:
+                            tries = 0
                             self.logger.info(
                                 'MD5 not found at %s, '
                                 'integrity will not be checked.' % ("%s.md5" % uri)
                             )
-                            # handle file exc. as well
+                        else:
+                            raise e
+                    # handle file exc. as well
                     except urllib2.URLError, e:
                         if e.reason.errno == 2:
+                            tries = 0
                             self.logger.info(
                                 'MD5 not found at %s, integrity will '
                                 'not be checked.' % "%s.md5" % uri)
+                        else:
+                            raise e
                 except Exception, e:
                     if tries > 0:
                         tries -= 1
