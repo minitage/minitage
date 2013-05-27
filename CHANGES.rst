@@ -6,6 +6,7 @@ Changelog for minitage
 -------------------
 
 - offline bootstrap better support
+- github retry policy to handle static fetch problems
 
 
 2.0.64 (2013-05-13)

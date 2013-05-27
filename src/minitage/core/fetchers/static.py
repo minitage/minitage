@@ -4,6 +4,7 @@ import os
 import urllib2
 import shutil
 import logging
+import time
 
 from distutils.dir_util import copy_tree
 
@@ -82,71 +83,62 @@ class StaticFetcher(interfaces.IFetcher):
         newer = True
         if (md5 and not minitage.core.common.test_md5(filepath, md5))\
            or not md5:
-            try:
-                # if we have not specified the md5, try to get one
+            tries = 10 # 10 retries
+            while tries:
                 try:
-                    downloaded_bits = None
-                    if not md5:
-                        md5 = None
-                        if github:
-                            resp = minitage.core.common.urlopen(uri)
-                            length = resp.headers.getheader('content-length')
-                            downloaded_bits = resp.read()
-                            if length: length = int(length)
-                            if length != len(downloaded_bits):
-                                raise Exception('Download incomplete, please '
-                                                'retry launching minimerge or '
-                                                'bugreport!')
-                            md5 = minitage.core.common.md5sum(StringIO(downloaded_bits))
-                        else:
-                            resp = minitage.core.common.urlopen("%s.md5" % uri)
-                            md5 = resp.read()
-
-                        # maybe mark the file as already there
-                        if os.path.exists(filepath):
-                            self.logger.warning('File %s is already downloaded' % filepath)
-                            if minitage.core.common.test_md5(filepath, md5):
-                                self.logger.debug('MD5 has not changed, download is aborted.')
-                                newer = False
-                            else:
-                                self.logger.debug(
-                                    'Its md5 has changed: %s != %s, redownloading' % (
-                                        minitage.core.common.md5sum(filepath), md5
-                                    )
-                                )
-                except urllib2.HTTPError, e:
-                    if e.code == 404:
-                        self.logger.info(
-                            'MD5 not found at %s, '
-                            'integrity will not be checked.' % ("%s.md5" % uri)
-                        )
-                        # handle file exc. as well
-                except urllib2.URLError, e:
-                    if e.reason.errno == 2:
-                        self.logger.info('MD5 not found at %s, integrity will not be checked.' % "%s.md5" % uri)
-
-                if newer:
-                    if verbose:
-                        self.logger.info('Downloading %s from %s.' % (filepath, uri))
-                    if not downloaded_bits:
-                        downloaded_bits = minitage.core.common.urlopen(uri).read()
-                    # save the downloaded file
-                    filep = open(filepath, 'wb')
-                    filep.write(downloaded_bits)
-                    filep.flush()
-                    filep.close()
-                    new_md5 = minitage.core.common.md5sum(filepath)
-                    # regenerate the md5 file
-                    md5p = open(md5path, 'wb')
-                    md5p.write(new_md5)
-                    md5p.flush()
-                    md5p.close()
-
-            except Exception, e:
-                message = 'Can\'t download file \'%s\' ' % filename
-                message += 'from  \'%s\' .\n\t%s' % (uri, e)
-                raise StaticFetchError(message)
-
+                    # if we have not specified the md5, try to get one
+                    try:
+                        (downloaded_bits, md5,
+                         github, uri, filepath, newer) = (
+                             self.md5part(
+                                 md5, github,
+                                 uri, filepath, newer)
+                         )
+                        tries = 0
+                    except urllib2.HTTPError, e:
+                        if e.code == 404:
+                            self.logger.info(
+                                'MD5 not found at %s, '
+                                'integrity will not be checked.' % ("%s.md5" % uri)
+                            )
+                            # handle file exc. as well
+                    except urllib2.URLError, e:
+                        if e.reason.errno == 2:
+                            self.logger.info(
+                                'MD5 not found at %s, integrity will '
+                                'not be checked.' % "%s.md5" % uri)
+                except Exception, e:
+                    if tries > 0:
+                        tries -= 1
+                        self.logger.error(
+                            'Error while verifying md5 '
+                            'retrying in 5 '
+                            'secs (left: %s)' % tries)
+                        self.logger.error(e)
+                        time.sleep(5)
+                    else:
+                        raise e
+            tries = 10 # 10 retries
+            while tries:
+                try:
+                    (new_md5,
+                     downloaded_bits) = self.download_part(
+                         newer, verbose,
+                         downloaded_bits, filepath, uri, md5path)
+                    tries = 0
+                except Exception, e:
+                    message = 'Can\'t download file \'%s\' ' % filename
+                    message += 'from  \'%s\' .\n\t%s' % (uri, e)
+                    if tries > 0:
+                        tries -= 1
+                        self.logger.error(
+                            'Error while downloading, '
+                            'retrying in 5 '
+                            'secs (left: %s)' % tries)
+                        self.logger.error(message)
+                        time.sleep(5)
+                    else:
+                        raise StaticFetchError(message)
             if newer:
                 try:
                     # try to unpack
@@ -172,8 +164,6 @@ class StaticFetcher(interfaces.IFetcher):
                         if os.path.isdir(filepath):
                             shutil.copytree(filepath, os.path.join(dest, filename))
                     # if we have only one subdir, just move the files outthere.
-
-
                 except Exception, e:
                     message = 'Can\'t install file %s in its destination %s.'
                     raise StaticFetchError(message % (filepath, dest))
@@ -193,4 +183,58 @@ class StaticFetcher(interfaces.IFetcher):
     def is_valid_src_uri(self, uri):
         """Nothing to do there."""
         pass
+
+    def md5part(self, md5, github, uri, filepath, newer):
+        downloaded_bits = None
+        if not md5:
+            md5 = None
+            if github:
+                resp = minitage.core.common.urlopen(uri)
+                length = resp.headers.getheader('content-length')
+                downloaded_bits = resp.read()
+                if length: length = int(length)
+                if length != len(downloaded_bits):
+                    raise Exception('Download incomplete, please '
+                                    'retry launching minimerge or '
+                                    'bugreport!')
+                md5 = minitage.core.common.md5sum(StringIO(downloaded_bits))
+            else:
+                resp = minitage.core.common.urlopen("%s.md5" % uri)
+                md5 = resp.read()
+
+            # maybe mark the file as already there
+            if os.path.exists(filepath):
+                self.logger.warning('File %s is already downloaded' % filepath)
+                if minitage.core.common.test_md5(filepath, md5):
+                    self.logger.debug('MD5 has not changed, download is aborted.')
+                    newer = False
+                else:
+                    self.logger.debug(
+                        'Its md5 has changed: %s != %s, redownloading' % (
+                            minitage.core.common.md5sum(filepath), md5
+                        )
+                    )
+        return (downloaded_bits, md5,
+                github, uri, filepath, newer)
+
+    def download_part(self, newer, verbose, downloaded_bits, filepath, uri, md5path):
+        new_md5 = None
+        if newer:
+            if verbose:
+                self.logger.info('Downloading %s from %s.' % (filepath, uri))
+            if not downloaded_bits:
+                downloaded_bits = minitage.core.common.urlopen(uri).read()
+            # save the downloaded file
+            filep = open(filepath, 'wb')
+            filep.write(downloaded_bits)
+            filep.flush()
+            filep.close()
+            new_md5 = minitage.core.common.md5sum(filepath)
+            # regenerate the md5 file
+            md5p = open(md5path, 'wb')
+            md5p.write(new_md5)
+            md5p.flush()
+            md5p.close()
+        return (new_md5, downloaded_bits)
+
 # vim:set et sts=4 ts=4 tw=80:
