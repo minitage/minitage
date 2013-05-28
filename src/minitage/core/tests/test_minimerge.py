@@ -430,6 +430,10 @@ class TestMinimerge(TestCase):
         self.assertTrue(minimerge.is_package_src_to_be_fetched(py24))
         os.makedirs(py24p)
         # package is not installed and unrelated
+        self.assertTrue(minimerge.is_package_src_to_be_fetched(py24))
+        fic = open(os.path.join(py24p, 'foo'), 'w')
+        fic.write('foo')
+        fic.close()
         self.assertRaises(core.MinimergeError, minimerge.is_package_src_to_be_fetched, py24)
         #fic = open(os.path.join(py24p, 'buildout.cfg'), 'w')
         #fic.write()
