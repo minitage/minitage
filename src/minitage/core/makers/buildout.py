@@ -281,10 +281,14 @@ class BuildoutMaker(interfaces.IMaker):
                     '' % ' '.join(
                             distribute_setup_places))
             if ds:
+                for eggc in  (
+                    os.path.abspath(os.path.abspath('../../downloads/minitage/eggs')),
+                    os.path.abspath(os.path.abspath('../../eggs/cache')),
+                ):
+                    if os.path.exists(eggc):
+                        break
                 bootstrap_args += ' --setup-source %s' % ds
-                bootstrap_args += ' --eggs %s' % (
-                    os.path.abspath('../../eggs/cache'),
-                )
+                bootstrap_args += ' --eggs %s' % (eggc)
         try:
             eggs_base = select_fl(find_links)
         except:
@@ -293,6 +297,7 @@ class BuildoutMaker(interfaces.IMaker):
                 raise Exception(
                     'Missing either '
                     'zc.buildout or distribute source')
+        bare_bootstrap_args = bootstrap_args
         if eggs_base is not None:
             arg = ""
             if '--download-base' in content:
@@ -304,10 +309,20 @@ class BuildoutMaker(interfaces.IMaker):
                     arg, eggs_base)
         if self.buildout_config and '"-c"' in content:
             bootstrap_args += " -c %s" % self.buildout_config
-        minitage.core.common.Popen(
-            '%s bootstrap.py %s ' % (py, bootstrap_args,),
-            opts.get('verbose', False)
-        )
+            bare_bootstrap_args += " -c %s" % self.buildout_config
+        try:
+            minitage.core.common.Popen(
+                '%s bootstrap.py %s ' % (py, bootstrap_args,),
+                opts.get('verbose', False)
+            )
+        except Exception, e:
+            self.logger.error(
+                'Buildout bootstrap failed, trying online !')
+            minitage.core.common.Popen(
+                '%s bootstrap.py %s ' % (py, bare_bootstrap_args,),
+                opts.get('verbose', False)
+            )
+
 
     def buildout(self,
                  directory=".",
