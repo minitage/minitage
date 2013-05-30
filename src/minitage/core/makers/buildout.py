@@ -88,11 +88,20 @@ class BuildoutMaker(interfaces.IMaker):
         buildout1 = False
         try:
             def findcfgs(path, cfgs=None):
+                ignored = ['var', 'parts']
+                dirs = []
                 if not cfgs: cfgs=[]
-                for p, ids, ifs in os.walk(path):
-                    for i in ifs:
-                        if i.endswith('.cfg'):
-                            cfgs.append(os.path.join(p, i))
+                for i in os.listdir(path):
+                    fi = os.path.join(path, i)
+                    if fi.endswith('.cfg') and os.path.isfile(fi):
+                        cfgs.append(fi)
+                    if os.path.isdir(fi) and (not i in ignored):
+                        dirs.append(fi)
+                for fpath in dirs:
+                    for p, ids, ifs in os.walk(fpath):
+                        for i in ifs:
+                            if i.endswith('.cfg'):
+                                cfgs.append(os.path.join(p, i))
                 return cfgs
             files = findcfgs(directory)
             for f in files:
