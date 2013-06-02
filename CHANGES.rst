@@ -2,7 +2,7 @@ Changelog for minitage
 ===============================
 
 
-2.0.65 (unreleased)
+2.0.65 (2013-06-02)
 -------------------
 
 - offline bootstrap better support
