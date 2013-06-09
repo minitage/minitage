@@ -39,6 +39,7 @@ setup(
     license = 'BSD',
     namespace_packages = [ 'minitage', 'minitage.core', ],
     install_requires = ['iniparse', 
+                        'setuptools',
                         'minitage.paste >= 1.4.6',
 #                        'minitage.core >= 2.0.57',
                         'ordereddict', 'setuptools'],
