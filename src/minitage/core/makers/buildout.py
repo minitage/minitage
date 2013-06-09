@@ -4,6 +4,7 @@ import os
 import sys
 import logging
 
+import pkg_resources
 import urllib2
 
 from minitage.core.makers  import interfaces
@@ -84,6 +85,16 @@ class BuildoutMaker(interfaces.IMaker):
             return True
         return False
 
+    def has_setuptools7(self):
+        try:
+            new_st = not pkg_resources.get_distribution('distribute').version.startswith('0.6')
+            if not new_st:
+                new_st = not pkg_resources.get_distribution('distribute').version.startswith('0.6')
+        except:
+            new_st = False
+        return new_st
+
+
     def upgrade_bootstrap(self, minimerge, offline, directory="."):
         buildout1 = False
         try:
@@ -114,7 +125,12 @@ class BuildoutMaker(interfaces.IMaker):
         if buildout1:
             booturl = 'http://downloads.buildout.org/1/bootstrap.py'
         else:
-            booturl = 'http://downloads.buildout.org/2/bootstrap.py'
+            if self.has_setuptools7():
+                booturl = 'https://raw.github.com/tseaver/buildout/use-setuptools-0.7/bootstrap/bootstrap.py'
+
+            else:
+                booturl = 'http://downloads.buildout.org/2/bootstrap.py'
+        self.logger.debug('Using %s' % booturl)
         # try to donwload an uptodate bootstrap
         if not offline:
             try:
@@ -215,6 +231,7 @@ class BuildoutMaker(interfaces.IMaker):
 
     def buildout_bootstrap(self, directory, opts):
         offline = get_offline(opts)
+        new_st = self.has_setuptools7()
         dcfg = os.path.expanduser('~/.buildout/default.cfg')
         minimerge = opts.get('minimerge', None)
         py = self.choose_python(directory, opts)
@@ -266,16 +283,20 @@ class BuildoutMaker(interfaces.IMaker):
             os.path.expanduser('~/.buildout/downloads/minitage/eggs'),
             os.path.expanduser('~/'),
         ]
+
         bootstrap_args = ''
         self.upgrade_bootstrap(minimerge, offline)
         # be sure which buildout bootstrap we have
         fic = open('bootstrap.py')
         content = fic.read()
         fic.close()
-        has_buildout2, has_buildout1 = False, False
         if '--distribute' in content:
-            self.logger.warning('Using distribute !')
-            bootstrap_args += ' %s' % '--distribute'
+            if not new_st:
+                self.logger.warning('Using distribute !')
+                bootstrap_args += ' %s' % '--distribute'
+        if new_st:
+            self.logger.warning('Forcing to use setuptools')
+        has_buildout2, has_buildout1 = False, False
         if offline:
             if ' --accept-buildout-test-releases' in content:
                 bootstrap_args += ' --accept-buildout-test-releases'
