@@ -21,21 +21,7 @@ class BuildoutError(interfaces.IMakerError):
 
 __logger__ = 'minitage.makers.buildout'
 
-def select_ds(distribute_setup_places):
-    try:
-        if not pkg_resources.get_distribution('distribute').version.startswith('0.6'):
-            raise ValueError()
-        mfile = 'distribute_setup.py'
-    except:
-        mfile = 'ez_setup.py'
-    ds = None
-    for i in distribute_setup_places:
-        ds = os.path.join(i, mfile)
-        if os.path.exists(ds):
-            break
-        else:
-            ds = None
-    return ds
+
 
 def select_fl(fl):
     found = False
@@ -72,6 +58,19 @@ def get_offline(opts):
 class BuildoutMaker(interfaces.IMaker):
     """Buildout Maker.
     """
+    def select_ds(self, distribute_setup_places, py = None):
+        mfile = 'distribute_setup.py'
+        if self.has_setuptools7(py):
+            mfile = 'ez_setup.py'
+        ds = None
+        for i in distribute_setup_places:
+            ds = os.path.join(i, mfile)
+            if os.path.exists(ds):
+                break
+            else:
+                ds = None
+        return ds
+
     def __init__(self, config = None, verbose=False):
         """Init a buildout maker object.
         Arguments
@@ -93,17 +92,26 @@ class BuildoutMaker(interfaces.IMaker):
             return True
         return False
 
-    def has_setuptools7(self):
+    def has_setuptools7(self, py=None):
+        new_st = False
+        if not py:
+            py = sys.executable
         try:
-            new_st = not pkg_resources.get_distribution('distribute').version.startswith('0.6')
-            if not new_st:
-                new_st = not pkg_resources.get_distribution('distribute').version.startswith('0.6')
-        except:
+            cmd = [py,
+                   "-c",
+                   "import pkg_resources;print not pkg_resources.get_distribution('distribute').version.startswith('0.6')"]
+            self.logger.debug('Run %s' % " ".join(cmd))
+            ret = subprocess.Popen(
+               cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,)
+            if ret.wait() == 0:
+                if 'true' in ret.stdout.read().lower():
+                    new_st = True
+        except Exception, e:
             new_st = False
         return new_st
 
 
-    def upgrade_bootstrap(self, minimerge, offline, directory="."):
+    def upgrade_bootstrap(self, minimerge, offline, directory=".", py=None):
         buildout1 = False
         try:
             def findcfgs(path, cfgs=None):
@@ -133,7 +141,7 @@ class BuildoutMaker(interfaces.IMaker):
         if buildout1:
             booturl = 'http://downloads.buildout.org/1/bootstrap.py'
         else:
-            if self.has_setuptools7():
+            if self.has_setuptools7(py=py):
                 booturl = 'https://raw.github.com/tseaver/buildout/use-setuptools-0.7/bootstrap/bootstrap.py'
 
             else:
@@ -239,10 +247,10 @@ class BuildoutMaker(interfaces.IMaker):
 
     def buildout_bootstrap(self, directory, opts):
         offline = get_offline(opts)
-        new_st = self.has_setuptools7()
         dcfg = os.path.expanduser('~/.buildout/default.cfg')
         minimerge = opts.get('minimerge', None)
         py = self.choose_python(directory, opts)
+        new_st = self.has_setuptools7(py=py)
         downloads_caches = [
             os.path.abspath('../../downloads/dist'),
             os.path.abspath('../../downloads/minitage/eggs'),
@@ -293,7 +301,7 @@ class BuildoutMaker(interfaces.IMaker):
         ]
 
         bootstrap_args = ''
-        self.upgrade_bootstrap(minimerge, offline)
+        self.upgrade_bootstrap(minimerge, offline, py=py)
         # be sure which buildout bootstrap we have
         fic = open('bootstrap.py')
         content = fic.read()
@@ -310,7 +318,7 @@ class BuildoutMaker(interfaces.IMaker):
                 bootstrap_args += ' --accept-buildout-test-releases'
         if ('--setup-source' in content
             and not "--find-links" in content):
-            ds = select_ds(distribute_setup_places)
+            ds = self.select_ds(distribute_setup_places)
             if not ds and offline:
                 raise Exception(
                     'Bootstrap failed, '
