@@ -318,7 +318,7 @@ class BuildoutMaker(interfaces.IMaker):
                 bootstrap_args += ' --accept-buildout-test-releases'
         if ('--setup-source' in content
             and not "--find-links" in content):
-            ds = self.select_ds(distribute_setup_places)
+            ds = self.select_ds(distribute_setup_places, py=py)
             if not ds and offline:
                 raise Exception(
                     'Bootstrap failed, '
