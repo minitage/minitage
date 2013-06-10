@@ -8,8 +8,10 @@ import pkg_resources
 import urllib2
 
 from minitage.core.makers  import interfaces
+from minitage.core.unpackers  import interfaces as uinterfaces
 import minitage.core.core
 import minitage.core.common
+import subprocess
 import traceback
 
 from iniparse import ConfigParser
@@ -347,18 +349,57 @@ class BuildoutMaker(interfaces.IMaker):
             bootstrap_args += " -c %s" % self.buildout_config
             bare_bootstrap_args += " -c %s" % self.buildout_config
         try:
-            minitage.core.common.Popen(
-                '%s bootstrap.py %s ' % (py, bootstrap_args,),
-                opts.get('verbose', False)
-            )
+            cmd = '%s bootstrap.py %s ' % (py, bootstrap_args,)
+            self.logger.info('Running %s' % cmd)
+            minitage.core.common.Popen(cmd , opts.get('verbose', False))
         except Exception, e:
-            self.logger.error(
-                'Buildout bootstrap failed, trying online !')
-            minitage.core.common.Popen(
-                '%s bootstrap.py %s ' % (py, bare_bootstrap_args,),
-                opts.get('verbose', False)
-            )
+            self.logger.error('Buildout bootstrap failed, trying online !')
+            cmd = '%s bootstrap.py %s ' % (py, bare_bootstrap_args,)
+            self.logger.info('Running %s' % cmd)
+            minitage.core.common.Popen(cmd, opts.get('verbose', False))
+        # Be sure to have an unzipped eggs
+        SCRIPT = """
+import pkg_resources
+for i in ['setuptools', 'zc.buildout']:
+    print pkg_resources.get_distribution(i).location
 
+        """
+        if not os.path.isdir(".minitage"):
+            os.makedirs(".minitage")
+        fic = open('.minitage/setup.py', 'w')
+        fic.write(SCRIPT)
+        fic.close()
+        ret = subprocess.Popen(
+            ['bin/buildout', 'setup', '.minitage/setup.py'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+        )
+        if ret.wait() == 0:
+            output = [a for a in ret.stdout.read().splitlines()
+                      if os.path.exists(a)]
+            for a in output:
+                if os.path.isfile(a):
+                    # unpack
+                    self.logger.info('Unpack to dir: %s' % a)
+                    f = uinterfaces.IUnpackerFactory()
+                    n = 1
+                    while True:
+                        n += 1
+                        orig = '%s.old.%s' % (a, n)
+                        try:
+                            os.rename(a, orig)
+                            break
+                        except:
+                            if n > 100:
+                                raise
+                            else:
+                                pass
+                    zipf = f(orig)
+                    zipf.unpack(orig, a,)
+        else:
+            raise BuildoutError(
+                'Buildout not bootstrapped')
 
     def buildout(self,
                  directory=".",
