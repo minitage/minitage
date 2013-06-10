@@ -20,9 +20,15 @@ class BuildoutError(interfaces.IMakerError):
 __logger__ = 'minitage.makers.buildout'
 
 def select_ds(distribute_setup_places):
+    try:
+        if not pkg_resources.get_distribution('distribute').version.startswith('0.6'):
+            raise ValueError()
+        mfile = 'distribute_setup.py'
+    except:
+        mfile = 'ez_setup.py'
     ds = None
     for i in distribute_setup_places:
-        ds = os.path.join(i, 'distribute_setup.py')
+        ds = os.path.join(i, mfile)
         if os.path.exists(ds):
             break
         else:
