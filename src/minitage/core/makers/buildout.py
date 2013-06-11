@@ -100,7 +100,7 @@ class BuildoutMaker(interfaces.IMaker):
             cmd = [py,
                    "-c",
                    "import pkg_resources;print not pkg_resources.get_distribution('distribute').version.startswith('0.6')"]
-            self.logger.debug('Run %s' % " ".join(cmd))
+            #self.logger.debug('Run %s' % " ".join(cmd))
             ret = subprocess.Popen(
                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,)
             if ret.wait() == 0:
