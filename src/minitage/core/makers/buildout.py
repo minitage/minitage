@@ -136,16 +136,23 @@ class BuildoutMaker(interfaces.IMaker):
                 if 'buildout.dumppick' in fic.read():
                     buildout1 = True
                 fic.close()
+            adirectory = os.path.abspath(directory)
+            if (
+                ('dependencies/' in adirectory)
+                or ('eggs/' in adirectory)
+            ):
+                buildout1 = True
+
         except Exception, e:
             pass
         if buildout1:
             booturl = 'http://downloads.buildout.org/1/bootstrap.py'
         else:
-            if self.has_setuptools7(py=py):
-                booturl = 'https://raw.github.com/tseaver/buildout/use-setuptools-0.7/bootstrap/bootstrap.py'
+            #if self.has_setuptools7(py=py):
+            #    booturl = 'https://raw.github.com/tseaver/buildout/use-setuptools-0.7/bootstrap/bootstrap.py'
 
-            else:
-                booturl = 'http://downloads.buildout.org/2/bootstrap.py'
+            #else:
+            booturl = 'http://downloads.buildout.org/2/bootstrap.py'
         self.logger.debug('Using %s' % booturl)
         # try to donwload an uptodate bootstrap
         # set defaulttimeout
