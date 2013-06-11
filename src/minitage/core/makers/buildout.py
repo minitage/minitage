@@ -148,33 +148,48 @@ class BuildoutMaker(interfaces.IMaker):
                 booturl = 'http://downloads.buildout.org/2/bootstrap.py'
         self.logger.debug('Using %s' % booturl)
         # try to donwload an uptodate bootstrap
-        if not offline:
+        # set defaulttimeout
+        # and add possible content
+        try:
             try:
-                try:
-                    fic = open('bootstrap.py')
-                    oldcontent = fic.read()
-                    fic.close()
-                except:
-                    oldcontent = ""
+                fic = open('bootstrap.py')
+                oldcontent = fic.read()
+                fic.close()
+            except:
+                oldcontent = ""
+            data = oldcontent
+            updated = False
+            dled = False
+            if not offline:
                 try:
                     open(
                         os.path.join(minimerge.history_dir,
                                      'updated_bootstrap'))
                 except:
-                    fic = open('bootstrap.py', 'w')
-                    data = urllib2.urlopen(booturl).read()
-                    fic.write(data)
-                    fic.close()
                     self.logger.info('Bootstrap updated')
-                    fic = open(os.path.join(
-                        minimerge, 'updated_bootstrap'), 'w')
-                    fic.write('foo')
-                    fic.close()
-            except:
-                if oldcontent:
-                    fic = open('bootstrap.py', 'w')
-                    fic.write(oldcontent)
-                    fic.close()
+                    data = urllib2.urlopen(booturl).read()
+                    updated = True
+                    dled = True
+            if not 'socket.setdefaulttimeout' in data:
+                updated = True
+                ldata = data.splitlines()
+                ldata.insert(1, 'import socket;socket.setdefaulttimeout(2)')
+                data = '\n'.join(ldata)
+            self.logger.info('Bootstrap updated')
+            if updated:
+                fic = open('bootstrap.py', 'w')
+                fic.write(data)
+                fic.close()
+            if dled:
+                afic = open(os.path.join(
+                    minimerge, 'updated_bootstrap'), 'w')
+                afic.write('foo')
+                afic.close()
+        except:
+            if oldcontent:
+                fic = open('bootstrap.py', 'w')
+                fic.write(oldcontent)
+                fic.close()
 
     def reinstall(self, directory, opts=None):
         """Rebuild a package.
