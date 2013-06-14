@@ -182,14 +182,14 @@ class BuildoutMaker(interfaces.IMaker):
                 ldata = data.splitlines()
                 ldata.insert(1, 'import socket;socket.setdefaulttimeout(2)')
                 data = '\n'.join(ldata)
-            self.logger.info('Bootstrap updated')
             if updated:
+                self.logger.info('Bootstrap updated')
                 fic = open('bootstrap.py', 'w')
                 fic.write(data)
                 fic.close()
             if dled:
                 afic = open(os.path.join(
-                    minimerge, 'updated_bootstrap'), 'w')
+                    minimerge.history_dir, 'updated_bootstrap'), 'w')
                 afic.write('foo')
                 afic.close()
         except:
