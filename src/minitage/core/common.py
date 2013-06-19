@@ -50,24 +50,28 @@ jump_help = ('Squizze prior dependencies to the '
 fetchonly_help = 'Fetch the packages but do not build yet'
 fetchfirst_help = 'Fetch the packages first before building them'
 delete_help = 'Remove selected packages'
-reinstall_help = 'Unconditionnaly rebuild/reinstall packages'
+reinstall_help = (
+    'Unconditionnaly rebuild/reinstall packages in conservative '
+    'mode. (-u is not conservative)'
+)
 install_help = 'Installs packages (default action)'
 nodeps_help = 'Squizzes all dependencies'
 config_help = ('Alternate config file. By default it\'s searched in '
                '%s/etc/minimerge.cfg.' % sys.exec_prefix)
 pretend_help = 'Do nothing, show what will be done'
-update_help = ('Update packages from where they come '
-               'prior to compilation step automaticly')
+
 ask_help = 'Do nothing, show what will be done and ask to continue'
 only_dependencies_help = 'Do actions onto dependencies, do not build the given packages'
 all_python_versions_help = 'Build python bindings for all python packages present in minitage'
+update_help = ('Update packages codesource (fetch/pull) '
+               'prior to compilation step automaticly')
 upgrade_help = (
-    'Will try to rebuild already installed sofware. if '
-    'you need to be sure that all will be rebuilt '
-    '(for buildout, it runs it in new mode whereas by '
-    'default, buildout is running in non newest mode, activate '
-    'also the -R flag. If you want minimerge to update '
-    'the packages from where they come, please activate '
+    'WILL TRY TO REBUILD already installed sofware '
+    'but with rnnning buildout in newest mode whereas by '
+    'default, buildout is running in non newest mode, '
+    'You should also activate -R flag to force rebuild. '
+    'If you want minimerge to update '
+    'the packages (aka git pull), please activate '
     'also the -U flag.')
 
 actions = [

@@ -8,13 +8,37 @@ import pkg_resources
 import urllib2
 
 from minitage.core.makers  import interfaces
+from iniparse import ConfigParser
 from minitage.core.unpackers  import interfaces as uinterfaces
 import minitage.core.core
 import minitage.core.common
 import subprocess
 import traceback
 
-from iniparse import ConfigParser
+from threading  import Thread
+import fcntl
+
+try:
+    from Queue import Queue, Empty
+except ImportError:
+    from queue import Queue, Empty  # python 3.x
+
+ON_POSIX = 'posix' in sys.builtin_module_names
+
+
+def enqueue_output(ret, queue):
+    while True:
+        out = ret.stdout.read()
+        eout = ret.stderr.read()
+        if (eout == '') and  (out == '') and (ret.returncode != None):
+            break
+        queue.put(out)
+        queue.put(eout)
+        sys.stdout.write(out)
+        sys.stdout.write(eout)
+    ret.stdout.close()
+    ret.stderr.close()
+
 
 class BuildoutError(interfaces.IMakerError):
     """General Buildout Error."""
@@ -22,6 +46,7 @@ class BuildoutError(interfaces.IMakerError):
 __logger__ = 'minitage.makers.buildout'
 
 
+class MrDeveloperError(BuildoutError): pass
 
 def select_fl(fl):
     found = False
@@ -48,6 +73,8 @@ def select_fl(fl):
                 found = True
                 break
     return ret
+
+
 
 def get_offline(opts):
     minimerge_offline = (True=='minimerge' in opts) and opts['minimerge']._offline or False
@@ -110,6 +137,61 @@ class BuildoutMaker(interfaces.IMaker):
             new_st = False
         return new_st
 
+    def upgrade_code(self, opts):
+        """try to run mr.developer but not as a fail element"""
+        if (
+            not opts['offline']
+            and os.path.isfile('bin/develop')
+            and opts['minimerge'].is_package_to_be_updated(
+                opts['minibuild'])
+        ):
+            content  = open('bin/develop').read()
+            if 'mr.developer' in content:
+                self.logger.info(
+                    'Running mr.developer update')
+                helpret = subprocess.Popen(
+                    ['bin/develop', 'up', '--help'],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    stdin=subprocess.PIPE,
+                )
+                outputs = []
+                while helpret.poll() is None:
+                    outputs.append(helpret.communicate())
+                if helpret.wait() != 0:
+                    raise MrDeveloperError('error with help')
+                else:
+                    content = ''.join([a[0] for a in outputs])
+                    cmd = ['bin/develop', 'up', '-v']
+                    if '--force' in content:
+                        cmd.append('--force')
+                    self.logger.info(
+                        'Running %s' % ' '.join(cmd))
+                    ret = subprocess.Popen(
+                        cmd, bufsize=-1,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        stdin=subprocess.PIPE,)
+                    #for i in (ret.stdout, ret.stderr):
+                    #    fd = i.fileno()
+                    #    fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                    #    fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+                    q = Queue()
+                    t = Thread(target=enqueue_output, args=(ret, q,))
+                    t.daemon = True
+                    t.start()
+                    outputs = []
+                    ret.wait()
+                    buf = ''
+                    while not q.empty():
+                        buf += q.get()
+                    q.join()
+                    if t and t.is_alive(): #wait for thread to finish
+                        t.join()
+                    if ret.returncode == 0:
+                        self.logger.info('mr.developer successfuly updated code')
+                    else:
+                        raise MrDeveloperError('mr.developer failed to update code')
 
     def upgrade_bootstrap(self, minimerge, offline, directory=".", py=None):
         buildout1 = False
@@ -258,6 +340,7 @@ class BuildoutMaker(interfaces.IMaker):
                         ' to update/rebuild it unconditionnaly,'
                         ' please relaunch with -uUR.' % directory)
                 else:
+                    self.upgrade_code(opts)
                     self.buildout_bootstrap(directory, opts)
                     self.buildout(directory, parts, opts)
             except Exception, instance:

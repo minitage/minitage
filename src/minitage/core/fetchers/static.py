@@ -89,12 +89,16 @@ class StaticFetcher(interfaces.IFetcher):
                     downloaded_bits = ''
                     # if we have not specified the md5, try to get one
                     try:
+                        if github:
+                            time.sleep(1)
                         (downloaded_bits, md5,
                          github, uri, filepath, newer) = (
                              self.md5part(
                                  md5, github,
                                  uri, filepath, newer)
                          )
+                        if github:
+                            time.sleep(1)
                         tries = 0
                     except urllib2.HTTPError, e:
                         if e.code == 404:
@@ -122,12 +126,14 @@ class StaticFetcher(interfaces.IFetcher):
                             'retrying in 5 '
                             'secs (left: %s)' % tries)
                         self.logger.error(e)
-                        time.sleep(5)
+                        time.sleep(1)
                     else:
                         raise e
             tries = 10 # 10 retries
             while tries:
                 try:
+                    if github:
+                        time.sleep(1)
                     (new_md5,
                      downloaded_bits) = self.download_part(
                          newer, verbose,
@@ -143,7 +149,7 @@ class StaticFetcher(interfaces.IFetcher):
                             'retrying in 5 '
                             'secs (left: %s)' % tries)
                         self.logger.error(message)
-                        time.sleep(5)
+                        time.sleep(2)
                     else:
                         raise StaticFetchError(message)
             if newer:
@@ -197,6 +203,7 @@ class StaticFetcher(interfaces.IFetcher):
             md5 = None
             if github:
                 resp = minitage.core.common.urlopen(uri)
+                time.sleep(2) 
                 length = resp.headers.getheader('content-length')
                 downloaded_bits = resp.read()
                 if length: length = int(length)

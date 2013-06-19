@@ -6,6 +6,9 @@ Changelog for minitage
 -------------------
 
 - handle setuptools 0.7
+- add mr.developer support to auto update buildout packages prior to
+  reinstallation
+- more github consistant code for retry download
 
 
 2.0.65 (2013-06-02)
