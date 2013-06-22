@@ -2,7 +2,7 @@ Changelog for minitage
 ===============================
 
 
-2.0.66 (unreleased)
+2.0.66 (2013-06-22)
 -------------------
 
 - handle setuptools 0.7
