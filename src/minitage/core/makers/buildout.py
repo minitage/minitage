@@ -3,6 +3,8 @@ __docformat__ = 'restructuredtext en'
 import os
 import sys
 import logging
+import re
+re_f = re.S|re.M|re.U
 
 import pkg_resources
 import urllib2
@@ -215,7 +217,13 @@ class BuildoutMaker(interfaces.IMaker):
             files = findcfgs(directory)
             for f in files:
                 fic = open(f)
-                if 'buildout.dumppick' in fic.read():
+                buildout1re = re.compile('^zc\.buildout\s*=\s*1', re_f)
+                dfic = fic.read()
+                if (
+                        ('buildout.dumppick' in dfic)
+                        or
+                        (buildout1re.search(dfic))
+                ):
                     buildout1 = True
                 fic.close()
             adirectory = os.path.abspath(directory)
