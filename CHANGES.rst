@@ -5,7 +5,7 @@ Changelog for minitage
 2.0.67 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- handle setuptools 0.9 / distribute 0.6.49
 
 
 2.0.66 (2013-06-22)

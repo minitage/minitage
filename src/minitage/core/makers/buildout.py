@@ -5,6 +5,7 @@ import sys
 import logging
 import re
 re_f = re.S|re.M|re.U
+import copy
 
 import pkg_resources
 import urllib2
@@ -56,6 +57,13 @@ def select_fl(fl):
     for d in fl:
         if os.path.exists(d):
             files = os.listdir(d)
+            has_st = True in [True
+             for a in files
+             if (a.startswith('setuptools')
+                 and (a.endswith('gz')
+                     or a.endswith('zip')
+                     or a.endswith('egg')
+                 ))]
             has_ds = True in [True
              for a in files
              if (a.startswith('distribute')
@@ -70,7 +78,7 @@ def select_fl(fl):
                      or a.endswith('zip')
                      or a.endswith('egg')
                  ))]
-            if has_buildout and has_ds:
+            if has_buildout and (has_st or has_ds):
                 ret = d
                 found = True
                 break
@@ -414,6 +422,7 @@ class BuildoutMaker(interfaces.IMaker):
         ]
 
         bootstrap_args = ''
+        st_bootstrap_args = ''
         self.upgrade_bootstrap(minimerge, offline, py=py)
         # be sure which buildout bootstrap we have
         fic = open('bootstrap.py')
@@ -421,7 +430,6 @@ class BuildoutMaker(interfaces.IMaker):
         fic.close()
         if '--distribute' in content:
             if not new_st:
-                self.logger.warning('Using distribute !')
                 bootstrap_args += ' %s' % '--distribute'
         if new_st:
             self.logger.warning('Forcing to use setuptools')
@@ -448,6 +456,8 @@ class BuildoutMaker(interfaces.IMaker):
                         break
                 bootstrap_args += ' --setup-source %s' % ds
                 bootstrap_args += ' --eggs %s' % (eggc)
+                st_bootstrap_args += ' --setup-source %s' % ds.replace('distribute_setup.py', 'ez_setup.py')
+                st_bootstrap_args += ' --eggs %s' % (eggc)
         try:
             eggs_base = select_fl(find_links)
         except:
@@ -455,8 +465,9 @@ class BuildoutMaker(interfaces.IMaker):
             if offline:
                 raise Exception(
                     'Missing either '
-                    'zc.buildout or distribute source')
+                    'zc.buildout or distribute/setuptools source')
         bare_bootstrap_args = bootstrap_args
+        st_bare_bootstrap_args = st_bootstrap_args
         if eggs_base is not None:
             arg = ""
             if '--download-base' in content:
@@ -469,15 +480,33 @@ class BuildoutMaker(interfaces.IMaker):
         if self.buildout_config and '"-c"' in content:
             bootstrap_args += " -c %s" % self.buildout_config
             bare_bootstrap_args += " -c %s" % self.buildout_config
-        try:
-            cmd = '%s bootstrap.py %s ' % (py, bootstrap_args,)
-            self.logger.info('Running %s' % cmd)
-            minitage.core.common.Popen(cmd , opts.get('verbose', False))
-        except Exception, e:
-            self.logger.error('Buildout bootstrap failed, trying online !')
-            cmd = '%s bootstrap.py %s ' % (py, bare_bootstrap_args,)
-            self.logger.info('Running %s' % cmd)
-            minitage.core.common.Popen(cmd, opts.get('verbose', False))
+            st_bootstrap_args += " -c %s" % self.buildout_config
+            st_bare_bootstrap_args += " -c %s" % self.buildout_config
+        BARGS = [(st_bootstrap_args, st_bare_bootstrap_args)]
+        if '--distribute' in content:
+            BARGS.append((bootstrap_args, bare_bootstrap_args))
+        for ix, bargs in enumerate(BARGS):
+            bootstrap_args, bare_bootstrap_args = bargs
+            try:
+                cmd = '%s bootstrap.py %s ' % (py, bootstrap_args,)
+                self.logger.info('Running %s' % cmd)
+                if '--distribute' in cmd:
+                    self.logger.warning('Using distribute !')
+                minitage.core.common.Popen(cmd , opts.get('verbose', False))
+            except Exception, e:
+                self.logger.error('Buildout bootstrap failed, trying online !')
+                cmd = '%s bootstrap.py %s ' % (py, bare_bootstrap_args,)
+                self.logger.info('Running %s' % cmd)
+                try:
+                    if '--distribute' in cmd:
+                        self.logger.warning('Using distribute !')
+                    minitage.core.common.Popen(cmd, opts.get('verbose', False))
+                except Exception, ex:
+                    if ix < len(BARGS) -1:
+                        continue
+                    else:
+                        raise
+            break
         # Be sure to have an unzipped eggs
         SCRIPT = """
 import pkg_resources
