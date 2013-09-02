@@ -6,7 +6,7 @@ Changelog for minitage
 -------------------
 
 - handle setuptools 0.9 / distribute 0.6.49
-
+- handle setuptools 1 & bootstrap multi args retries
 
 2.0.66 (2013-06-22)
 -------------------

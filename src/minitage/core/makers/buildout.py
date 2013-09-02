@@ -27,6 +27,13 @@ except ImportError:
     from queue import Queue, Empty  # python 3.x
 
 ON_POSIX = 'posix' in sys.builtin_module_names
+def run_boot_setup():
+    ret = subprocess.Popen(['bin/buildout', 'setup', '.minitage/setup.py'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+    )
+    return ret
 
 
 def enqueue_output(ret, queue):
@@ -468,6 +475,19 @@ class BuildoutMaker(interfaces.IMaker):
                     'zc.buildout or distribute/setuptools source')
         bare_bootstrap_args = bootstrap_args
         st_bare_bootstrap_args = st_bootstrap_args
+        boot_can_continue = False
+        if not os.path.isdir(".minitage"):
+            os.makedirs(".minitage")
+        # Be sure to have an unzipped eggs
+        SCRIPT = """
+import pkg_resources
+for i in ['setuptools', 'zc.buildout']:
+    print pkg_resources.get_distribution(i).location
+
+        """
+        fic = open('.minitage/setup.py', 'w')
+        fic.write(SCRIPT)
+        fic.close()
         if eggs_base is not None:
             arg = ""
             if '--download-base' in content:
@@ -493,6 +513,9 @@ class BuildoutMaker(interfaces.IMaker):
                 if '--distribute' in cmd:
                     self.logger.warning('Using distribute !')
                 minitage.core.common.Popen(cmd , opts.get('verbose', False))
+                boot_setup = run_boot_setup()
+                if boot_setup.wait() == 0:
+                    boot_can_continue = True
             except Exception, e:
                 self.logger.error('Buildout bootstrap failed, trying online !')
                 cmd = '%s bootstrap.py %s ' % (py, bare_bootstrap_args,)
@@ -501,32 +524,18 @@ class BuildoutMaker(interfaces.IMaker):
                     if '--distribute' in cmd:
                         self.logger.warning('Using distribute !')
                     minitage.core.common.Popen(cmd, opts.get('verbose', False))
+                    boot_setup = run_boot_setup()
+                    if boot_setup.wait() == 0:
+                        boot_can_continue = True
                 except Exception, ex:
                     if ix < len(BARGS) -1:
                         continue
                     else:
                         raise
-            break
-        # Be sure to have an unzipped eggs
-        SCRIPT = """
-import pkg_resources
-for i in ['setuptools', 'zc.buildout']:
-    print pkg_resources.get_distribution(i).location
-
-        """
-        if not os.path.isdir(".minitage"):
-            os.makedirs(".minitage")
-        fic = open('.minitage/setup.py', 'w')
-        fic.write(SCRIPT)
-        fic.close()
-        ret = subprocess.Popen(
-            ['bin/buildout', 'setup', '.minitage/setup.py'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,
-        )
-        if ret.wait() == 0:
-            output = [a for a in ret.stdout.read().splitlines()
+            if boot_can_continue:
+                break
+        if boot_can_continue:
+            output = [a for a in boot_setup.stdout.read().splitlines()
                       if os.path.exists(a)]
             for a in output:
                 if os.path.isfile(a):
