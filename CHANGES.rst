@@ -184,7 +184,7 @@ Changelog for minitage
 2.0.34 (2012-08-28)
 -------------------
 
-- Added the minitagify command see: `this doc <http://www.minitage.org/usecases/maintain_project.html#minitagify-an-existing-project>`_
+- Added the minitagify command see: `this doc <http://minitage.github.io/usecases/maintain_project.html#minitagify-an-existing-project>`_
 
 
 2.0.33 (2012-05-09)
@@ -336,7 +336,7 @@ BUGS:
     - bugfix in interfaces for configuration handling
     - buildout maker can be given an optionnal config to build
     - code stabilization and sync with other minitage components
-    - official documentation on http://www.minitage.org
+    - official documentation on http://minitage.github.io
 
 
 0.32

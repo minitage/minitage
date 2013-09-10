@@ -19,7 +19,7 @@ Introduction
     - ldflags
     - $PATH
 
-* The main documentation is not there but on http://www.minitage.org, please go there for further instructions.
+* The main documentation is not there but on http://minitage.github.io, please go there for further instructions.
 
 
 Credits
